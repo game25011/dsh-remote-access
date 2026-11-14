@@ -1,0 +1,22 @@
+{
+  "id": "smz.dsh.remote-access",
+  "name": "远程访问（Tailscale）",
+  "version": "0.1.0",
+  "manifestVersion": "0.15",
+  "facets": {
+    "host": { "entry": "index.js", "apiVersion": "v1alpha1" }
+  },
+  "requires": {
+    "contracts": [
+      { "apiVersion": "commands.dsh/v1alpha1", "kind": "Command" }
+    ]
+  },
+  "permissions": [],
+  "contributes": {
+    "commands": [
+      { "id": "smz.dsh.remote-access.show", "title": "显示远程 Web UI 登录链接" }
+    ]
+  },
+  "subscriptions": [],
+  "notes": "把本机 Web UI 经 Tailscale Serve 暴露给 tailnet；/remote 显示带进程 token 的登录链接。链接含登录凭证，只在本人设备上使用。"
+}
