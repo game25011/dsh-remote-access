@@ -1,16 +1,55 @@
 {
-  "name": "dsh-plugin-remote-access",
+  "name": "@game25011/dsh-remote-access",
   "version": "0.1.0",
   "description": "Expose the local DSH Web UI to your tailnet through Tailscale Serve, with a /remote command for the authenticated login link.",
   "type": "module",
   "main": "index.js",
-  "files": ["index.js", "cordis.patch.yml", "dsh-plugin.json", "README.md", "LICENSE"],
-  "engines": { "node": ">=20" },
-  "scripts": {
-    "test": "node --test test/core.test.js"
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
   },
-  "keywords": ["dsh", "dsh-plugin", "deepseek-harness", "tailscale", "remote", "webui"],
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "dsh-plugin.json",
+    "docs/INTERFACE.md",
+    "docs/RELEASING.md",
+    "docs/TEST-REPORT.md",
+    "README.md",
+    "CHANGELOG.md",
+    "AI-DISCLOSURE.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "dsh": ">=0.2.2-rc.0 <0.3.0",
+    "node": ">=20"
+  },
+  "author": "game25011",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/game25011/dsh-remote-access.git"
+  },
+  "homepage": "https://github.com/game25011/dsh-remote-access#readme",
+  "bugs": {
+    "url": "https://github.com/game25011/dsh-remote-access/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "tailscale",
+    "remote",
+    "webui",
+    "tailnet"
+  ],
+  "scripts": {
+    "test": "node --test test/core.test.js test/command.test.js",
+    "pack": "npm pack"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"

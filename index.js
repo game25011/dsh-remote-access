@@ -14,6 +14,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 export const name = 'dsh-plugin-remote-access'
+export const VERSION = '0.1.0'
 export const inject = ['commands', 'webServer', 'connection']
 
 export const DEFAULTS = {

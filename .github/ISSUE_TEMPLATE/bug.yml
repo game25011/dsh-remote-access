@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a reproducible problem with dsh-remote-access
+title: "[bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste tokens, cookies, private keys or full login links. Redact personal paths.
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: dsh
+    attributes:
+      label: DSH version and form
+      placeholder: 0.2.2-rc.1 desktop / dsh web
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options: [Windows, macOS, Linux]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected / actual
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Relevant output (redacted)
+      description: /remote text, DSH logs, tailscale serve status.

@@ -7,4 +7,4 @@
     trustedHosts: !!js (process.env.DSH_REMOTE_TRUSTED_HOSTS ?? '').split(',').map((s) => s.trim()).filter(Boolean)
 - insert:
     - id: remote-access-link
-      name: dsh-plugin-remote-access
+      name: '@game25011/dsh-remote-access'

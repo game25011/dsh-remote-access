@@ -1,0 +1,47 @@
+{
+  "format": 1,
+  "title": { "en": "DSH Community Plugins", "zh": "DSH 社区插件" },
+  "description": {
+    "en": "Community-maintained DeepSeek Harness bundles.",
+    "zh": "社区维护的 DeepSeek Harness 插件包。"
+  },
+  "metadata": {
+    "categories": {
+      "remote": { "title": { "en": "Remote access", "zh": "远程访问" } }
+    },
+    "labels": {
+      "tailscale": { "title": { "en": "Tailscale", "zh": "Tailscale" } },
+      "webui": { "title": { "en": "Web UI", "zh": "网页界面" } }
+    }
+  },
+  "plugins": [
+    {
+      "name": "@game25011/dsh-remote-access",
+      "title": { "en": "dsh-remote-access", "zh": "远程访问（Tailscale）" },
+      "description": {
+        "en": "Expose the local DSH Web UI to your Tailscale tailnet and get the authenticated login link with /remote.",
+        "zh": "把本机 DSH Web UI 通过 Tailscale 暴露给 tailnet，并用 /remote 取得带 token 的登录链接。"
+      },
+      "author": "game25011",
+      "homepage": "https://github.com/game25011/dsh-remote-access",
+      "repository": { "url": "https://github.com/game25011/dsh-remote-access" },
+      "metadata": {
+        "category": "remote",
+        "keywords": ["tailscale", "remote", "webui", "tailnet", "dsh"],
+        "labels": ["tailscale", "webui"]
+      },
+      "versions": [
+        {
+          "version": "0.1.0",
+          "publishTimestamp": 0,
+          "source": {
+            "type": "git",
+            "url": "https://github.com/game25011/dsh-remote-access",
+            "commit": ""
+          },
+          "engines": { "dsh": ">=0.2.2-rc.0 <0.3.0" }
+        }
+      ]
+    }
+  ]
+}
