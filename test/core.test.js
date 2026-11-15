@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   DEFAULTS,
+  VERSION,
   buildLoginLink,
   buildQrSvg,
   derivePublicUrl,
@@ -57,7 +58,7 @@ test('statusPayload shapes the RPC value defensively', () => {
     appPort: 1234,
     trusted: true,
   })
-  assert.equal(payload.version, '0.2.0')
+  assert.equal(payload.version, VERSION)
   assert.equal(payload.link, 'https://h/?token=t')
   assert.equal(payload.serving, true)
   assert.equal(payload.trusted, true)

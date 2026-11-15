@@ -1,5 +1,7 @@
 # dsh-remote-access
 
+<img src="assets/icon-180.png" width="96" alt="dsh-remote-access icon">
+
 [![CI](https://github.com/game25011/dsh-remote-access/actions/workflows/ci.yml/badge.svg)](https://github.com/game25011/dsh-remote-access/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@game25011/dsh-remote-access.svg)](https://www.npmjs.com/package/@game25011/dsh-remote-access)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)

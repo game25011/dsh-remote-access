@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 — 2026-11-15
+
+- Add a dedicated settings icon (monitor + signal motif) and an explicit "远程操控分支" scope
+  declaration on the settings page.
+- Add the plugin icon assets (`assets/icon.svg`, `assets/icon-180.png`) for storefronts.
+
 ## 0.2.0 — 2026-11-15
 
 - Add the Web Client half: a settings page `远程访问（Tailscale）` showing the login link,

@@ -33,7 +33,7 @@
   token exchange returned 303 and set a 30-day cookie.
 - Login link written to `$DSH_HOME/remote-access/url.txt`.
 
-## Pending manual verification (0.2.0)
+## Pending manual verification (0.2.1)
 
 - Open the settings page in the desktop app, copy the link and scan the QR from a tablet.
 - Toggle Serve off/on from the page and confirm the tailnet entry follows.
