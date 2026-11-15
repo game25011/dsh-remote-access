@@ -34,11 +34,11 @@
       "versions": [
         {
           "version": "0.2.1",
-          "publishTimestamp": 1794755763,
+          "publishTimestamp": 1794756364,
           "source": {
             "type": "git",
             "url": "https://github.com/game25011/dsh-remote-access",
-            "commit": "703a3bb"
+            "commit": "d849a0b"
           },
           "engines": { "dsh": ">=0.2.2-rc.0 <0.3.0" }
         }
