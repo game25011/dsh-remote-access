@@ -1,15 +1,18 @@
 {
   "name": "@game25011/dsh-remote-access",
-  "version": "0.1.0",
-  "description": "Expose the local DSH Web UI to your tailnet through Tailscale Serve, with a /remote command for the authenticated login link.",
+  "version": "0.2.0",
+  "description": "Expose the local DSH Web UI to your tailnet through Tailscale Serve, with /remote and a settings page for the authenticated login link and QR code.",
   "type": "module",
   "main": "index.js",
   "exports": {
     ".": "./index.js",
+    "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
   "files": [
     "index.js",
+    "lib/client.js",
+    "lib/vendor/qrcode.mjs",
     "cordis.patch.yml",
     "dsh-plugin.json",
     "docs/INTERFACE.md",
@@ -18,6 +21,7 @@
     "README.md",
     "CHANGELOG.md",
     "AI-DISCLOSURE.md",
+    "THIRD_PARTY_NOTICES.md",
     "LICENSE"
   ],
   "engines": {
@@ -37,22 +41,22 @@
   "publishConfig": {
     "access": "public"
   },
-  "keywords": [
-    "dsh",
-    "dsh-plugin",
-    "deepseek-harness",
-    "tailscale",
-    "remote",
-    "webui",
-    "tailnet"
-  ],
+  "keywords": ["dsh", "dsh-plugin", "deepseek-harness", "tailscale", "remote", "webui", "tailnet", "qr"],
   "scripts": {
-    "test": "node --test test/core.test.js test/command.test.js",
+    "test": "node --test test/core.test.js test/command.test.js test/client.test.js",
     "pack": "npm pack"
   },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ]
     }
   }
 }

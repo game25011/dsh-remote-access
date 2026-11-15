@@ -3,8 +3,10 @@ import assert from 'node:assert/strict'
 import {
   DEFAULTS,
   buildLoginLink,
+  buildQrSvg,
   derivePublicUrl,
   effectiveConfig,
+  statusPayload,
   trustHint,
 } from '../index.js'
 
@@ -37,4 +39,31 @@ test('trustHint reports missing trusted hosts', () => {
   assert.equal(trustHint({ trustedHosts: ['h.ts.net'] }, 'https://h.ts.net/'), '')
   assert.equal(trustHint({ trustedHosts: ['h.ts.net:8443'] }, 'https://h.ts.net/'), '')
   assert.equal(trustHint({}, 'not a url'), '')
+})
+test('buildQrSvg renders an SVG for a login link', () => {
+  const svg = buildQrSvg('https://host.tail1234.ts.net/?token=abc')
+  assert.match(svg, /^<svg/)
+  assert.ok(svg.includes('rect') || svg.includes('path'))
+  assert.equal(buildQrSvg(''), '')
+})
+
+test('statusPayload shapes the RPC value defensively', () => {
+  const payload = statusPayload({
+    link: 'https://h/?token=t',
+    publicUrl: 'https://h/',
+    qrSvg: '<svg/>',
+    servePort: 443,
+    serving: true,
+    appPort: 1234,
+    trusted: true,
+  })
+  assert.equal(payload.version, '0.2.0')
+  assert.equal(payload.link, 'https://h/?token=t')
+  assert.equal(payload.serving, true)
+  assert.equal(payload.trusted, true)
+  const empty = statusPayload({})
+  assert.equal(empty.link, '')
+  assert.equal(empty.qrSvg, '')
+  assert.equal(empty.serving, false)
+  assert.equal(empty.trusted, false)
 })

@@ -9,8 +9,9 @@ Expose the local **DeepSeek Harness (DSH) Web UI** to your own [Tailscale](https
 - The Web UI keeps binding `127.0.0.1`; the only external door is Tailscale (WireGuard, tailnet-only).
 - On activation the plugin reads the local Web UI port, builds the authenticated URL, writes it to `$DSH_HOME/remote-access/url.txt`, and runs `tailscale serve --bg --https=<port> http://127.0.0.1:<web port>`.
 - `/remote` prints the login link (with the per-process token). `/remote on` / `/remote off` toggle the Serve mapping.
+- A **Settings → 远程访问（Tailscale）** page shows the same link with a copy button, a QR code for the tablet camera, the live Serve status/toggle and the trusted-host self-check.
 - Closing the app turns the Serve mapping off.
-- Host-only plugin: no Web Client half, no runtime dependencies, no telemetry.
+- No runtime dependencies, no telemetry; the QR encoder is vendored (MIT).
 
 ## Requirements
 
@@ -84,7 +85,6 @@ or override the row in your own profile patch (applied after the bundle patch):
 
 ## Roadmap
 
-- Client-side settings page showing the link and a QR code.
 - Optional auto-revoke on idle.
 - Non-Serve transports (explicit bind + own proxy).
 
@@ -109,7 +109,8 @@ MIT — see [LICENSE](LICENSE).
 - 网页服务仍只绑 `127.0.0.1`，外部入口只有 Tailscale（WireGuard，仅 tailnet 可达）。
 - 启动时自动读本机 web 端口，写登录链接到 `$DSH_HOME/remote-access/url.txt`，并执行 `tailscale serve --bg --https=<端口> http://127.0.0.1:<web端口>`。
 - `/remote` 显示登录链接；`/remote on` / `/remote off` 开关 Serve 映射；应用退出时关闭映射。
-- 仅 Host 半，无 Web Client、无运行时依赖、不联网、不调用模型。
+- **设置 → 远程访问（Tailscale）** 页显示链接+复制、二维码（平板扫码）、Serve 状态/开关与信任自检。
+- 无运行时依赖、不联网、不调用模型；二维码编码器为 vendored（MIT）。
 
 安装：`dsh plugin --profile <profile> add @game25011/dsh-remote-access`，然后重启 DSH。
 

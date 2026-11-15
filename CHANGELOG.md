@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0 — 2026-11-15
+
+- Add the Web Client half: a settings page `远程访问（Tailscale）` showing the login link,
+  a copy button, the serve status/toggle and the trusted-host self-check.
+- Add a QR code for the login link (vendored MIT `qrcode-generator`, no runtime dependency).
+- New Connection RPC channel `/dsh-remote-access` (`status`, `serve`).
+- `/remote` command kept; serve state now reflects the actual tailscale result.
+
 ## 0.1.0 — 2026-11-15
 
 - Initial release.

@@ -78,3 +78,28 @@ auth; without the host here the remote page fails with 403.
   and `/remote` still prints the link and the failure status.
 - no MagicDNS name and no `publicUrl`: the command prints a configuration warning.
 - trusted host missing: the command prints a warning with the exact host to add.
+## Client half
+
+The Web Client bundle (`lib/client.js`) is a self-contained browser factory registered through
+`window.__ModuleLoader__.load({ id: 'dsh-remote-access', factory })`. It only requires `react`.
+
+- Registers `settings.section` (id `dsh-remote-access`, order 55, label 远程访问) and, on
+  DSH 0.2.2+, `settings.section.icon`.
+- The page reads the host through `ctx.connection.rpc.call('/dsh-remote-access', endpoint, payload, signal)`.
+- Rendering is defensive: a missing `connection.rpc` or a failed call shows an error in the page
+  instead of throwing during plugin load.
+
+### RPC endpoints
+
+| endpoint | payload | value |
+|---|---|---|
+| `status` | `{}` | `{ version, link, publicUrl, qrSvg, servePort, serving, appPort, trusted }` |
+| `serve` | `{ enabled: boolean }` | same shape after applying the toggle; `{ ok:false, error }` on failure |
+
+The `link` and `qrSvg` fields contain the process login token. They are returned only through
+the Connection RPC channel, which owns the browser Host/Origin/cookie fence; the page never
+writes them to storage or logs.
+
+## Files written
+
+- `$DSH_HOME/remote-access/url.txt` — bootstrap copy of the current login link.

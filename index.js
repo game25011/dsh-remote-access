@@ -1,21 +1,24 @@
 /**
  * dsh-plugin-remote-access
  *
- * 把当前 DSH Web UI 通过 Tailscale Serve 暴露给 tailnet，并提供 /remote 命令：
- * 显示带进程 token 的登录链接、启停 Serve、给出信任栅栏自检。
+ * 把当前 DSH Web UI 通过 Tailscale Serve 暴露给 tailnet，并提供：
+ * - /remote 命令：显示带进程 token 的登录链接、启停 Serve、信任栅栏自检；
+ * - Connection RPC 通道 /dsh-remote-access：给设置页提供状态、链接、二维码与开关。
  *
  * 设计边界：
  * - 网页服务仍只绑 loopback；对外入口只有 Tailscale（WireGuard，仅 tailnet）。
- * - token 只在本人设备上使用；/remote 输出等同登录凭证。
- * - 不修改 DSH 的认证实现；trustedHosts 由 cordis.patch.yml 注入（见 README）。
+ * - token 只在本人设备上使用；链接与二维码等同登录凭证。
+ * - 不修改 DSH 认证实现；trustedHosts 由 cordis.patch.yml 注入（见 README）。
  */
 import { execFile, execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import qrcode from './lib/vendor/qrcode.mjs'
 
 export const name = 'dsh-plugin-remote-access'
-export const VERSION = '0.1.0'
+export const VERSION = '0.2.0'
 export const inject = ['commands', 'webServer', 'connection']
+export const RPC_CHANNEL = '/dsh-remote-access'
 
 export const DEFAULTS = {
   serve: true,
@@ -77,6 +80,19 @@ export function buildLoginLink(publicUrl, authUrl) {
   }
 }
 
+/** 登录链接的二维码（内联 SVG）；失败时返回空串，设置页会隐藏图片。 */
+export function buildQrSvg(text) {
+  if (typeof text !== 'string' || text.length === 0) return ''
+  try {
+    const qr = qrcode(0, 'M')
+    qr.addData(text)
+    qr.make()
+    return qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true })
+  } catch {
+    return ''
+  }
+}
+
 /** 读一次 tailscale 状态；失败返回 undefined，不抛出。 */
 export function readTailscaleStatus(tailscalePath, timeoutMs) {
   try {
@@ -130,6 +146,20 @@ export function trustHint(connection, publicUrl) {
   }
 }
 
+/** 设置页 / RPC 共用的状态载荷；不含任何不是登录凭证之外的信息。 */
+export function statusPayload({ link, publicUrl, qrSvg, servePort, serving, appPort, trusted }) {
+  return {
+    version: VERSION,
+    link: typeof link === 'string' ? link : '',
+    publicUrl: typeof publicUrl === 'string' ? publicUrl : '',
+    qrSvg: typeof qrSvg === 'string' ? qrSvg : '',
+    servePort,
+    serving: serving === true,
+    appPort,
+    trusted: trusted === true,
+  }
+}
+
 export function apply(ctx, rawConfig) {
   const config = effectiveConfig(rawConfig)
   const log = (text) => console.log('[remote-access] ' + text)
@@ -144,43 +174,88 @@ export function apply(ctx, rawConfig) {
     if (!publicUrl) log('no public URL: set publicUrl or make sure tailscale is running')
 
     const link = () => buildLoginLink(publicUrl, connection.authenticatedUrl('http://127.0.0.1:' + appPort))
-    const hint = () => trustHint(connection, publicUrl)
-    const header = () => '远程 Web UI（Tailscale，仅 tailnet 可达）'
-    const body = () => {
-      const lines = [header(), '', link(), '', '首次打开带 token 的链接；之后 30 天直接打开：', publicUrl || '(未配置)']
-      lines.push('tailscale serve: ' + (config.serve ? '--https=' + config.servePort : 'off') + ' -> 127.0.0.1:' + appPort)
-      const extra = hint()
-      if (extra) lines.push('', extra)
-      return lines.join('\n')
-    }
+    const makeStatus = () => statusPayload({
+      link: link(),
+      publicUrl,
+      qrSvg: buildQrSvg(link()),
+      servePort: config.servePort,
+      serving,
+      appPort,
+      trusted: trustHint(connection, publicUrl) === '',
+    })
 
     writeBootstrapFile(link(), log)
     log('login link written to $DSH_HOME/remote-access/url.txt (port ' + appPort + ')')
 
     let serving = config.serve
     const enable = async () => {
-      serving = true
-      return runTailscale(tailscalePath, ['serve', '--bg', '--https=' + config.servePort, 'http://127.0.0.1:' + appPort], log)
+      const ok = await runTailscale(tailscalePath, ['serve', '--bg', '--https=' + config.servePort, 'http://127.0.0.1:' + appPort], log)
+      serving = ok
+      return ok
     }
     const disable = async () => {
-      serving = false
-      return runTailscale(tailscalePath, ['serve', '--https=' + config.servePort, 'off'], log)
+      const ok = await runTailscale(tailscalePath, ['serve', '--https=' + config.servePort, 'off'], log)
+      serving = ok ? false : serving
+      return ok
     }
     if (serving) enable()
     yield () => disable()
 
+    // ---- Connection RPC channel for the settings page ----
+    try {
+      const rpc = connection && connection.rpc
+      if (rpc && typeof rpc.handle === 'function') {
+        const registration = rpc.handle(RPC_CHANNEL, async (endpoint, payload) => {
+          if (endpoint === 'status') return { ok: true, value: makeStatus() }
+          if (endpoint === 'serve') {
+            const enabled = payload?.enabled === true
+            try {
+              const ok = enabled ? await enable() : await disable()
+              if (!ok) return { ok: false, error: { code: 'serve-failed', message: 'tailscale serve failed; see app log' } }
+              return { ok: true, value: makeStatus() }
+            } catch (error) {
+              return { ok: false, error: { code: 'serve-failed', message: String(error?.message ?? error) } }
+            }
+          }
+          return { ok: false, error: { code: 'not-found', message: 'unknown endpoint: ' + String(endpoint) } }
+        })
+        yield () => {
+          try {
+            if (typeof registration === 'function') Promise.resolve(registration()).catch(() => {})
+          } catch {}
+        }
+      } else {
+        log('connection.rpc.handle unavailable; the settings page will report it')
+      }
+    } catch (error) {
+      log('rpc channel registration failed: ' + (error?.message ?? error))
+    }
+
+    // ---- /remote command ----
     yield ctx.commands.register({
       name: 'remote',
       description: 'Show or toggle the Tailscale remote Web UI link',
       handler: async (invocation) => {
         const arg = String(invocation?.rawInput ?? '').trim().toLowerCase()
         if (arg === '' || arg === 'show' || arg === 'status') {
-          return { kind: 'success', text: body() }
+          const current = makeStatus()
+          const lines = [
+            '远程 Web UI（Tailscale，仅 tailnet 可达）',
+            '',
+            current.link,
+            '',
+            '首次打开带 token 的链接；之后 30 天直接打开：',
+            publicUrl || '(未配置)',
+            'tailscale serve: ' + (current.serving ? '--https=' + config.servePort + ' -> 127.0.0.1:' + appPort : 'off'),
+          ]
+          const hint = trustHint(connection, publicUrl)
+          if (hint) lines.push('', hint)
+          return { kind: 'success', text: lines.join('\n') }
         }
         if (arg === 'on') {
           const ok = await enable()
           return ok
-            ? { kind: 'success', text: 'tailscale serve 已开启。\n\n' + body() }
+            ? { kind: 'success', text: 'tailscale serve 已开启。' }
             : { kind: 'error', text: 'tailscale serve 开启失败，请查看应用日志。' }
         }
         if (arg === 'off') {

@@ -1,10 +1,11 @@
 {
   "id": "game25011.dsh.remote-access",
   "name": "远程访问（Tailscale）",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "manifestVersion": "0.15",
   "facets": {
-    "host": { "entry": "index.js", "apiVersion": "v1alpha1" }
+    "host": { "entry": "index.js", "apiVersion": "v1alpha1" },
+    "client": { "entry": "lib/client.js", "platform": "web" }
   },
   "requires": {
     "contracts": [
@@ -15,8 +16,11 @@
   "contributes": {
     "commands": [
       { "id": "game25011.dsh.remote-access.show", "title": "显示远程 Web UI 登录链接" }
+    ],
+    "settings": [
+      { "id": "game25011.dsh.remote-access.settings", "title": "远程访问（Tailscale）" }
     ]
   },
   "subscriptions": [],
-  "notes": "把本机 Web UI 经 Tailscale Serve 暴露给 tailnet；/remote 显示带进程 token 的登录链接。链接含登录凭证，只在本人设备上使用。不访问外部网络，不调用模型。"
+  "notes": "把本机 Web UI 经 Tailscale Serve 暴露给 tailnet；/remote 与设置页显示带进程 token 的登录链接和二维码。链接含登录凭证，只在本人设备上使用。不访问外部网络，不调用模型。"
 }

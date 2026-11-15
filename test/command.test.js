@@ -67,3 +67,47 @@ test('/remote warns when the public host is not trusted', async () => {
     else process.env.DSH_HOME = previous
   }
 })
+test('rpc status returns the link and QR, unknown endpoints fail', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'remote-access-rpc-'))
+  const previous = process.env.DSH_HOME
+  process.env.DSH_HOME = home
+  try {
+    let channel = ''
+    let handler = null
+    const ctx = {
+      webServer: { port: 12345, protocol: 'http:' },
+      connection: {
+        trustedHosts: ['host.tail1234.ts.net'],
+        authenticatedUrl: (base) => base + '/?token=tok',
+        rpc: {
+          handle(name, fn) {
+            channel = name
+            handler = fn
+            return () => {}
+          },
+        },
+      },
+      commands: { register: () => () => {} },
+      effect(fn) {
+        const iterator = fn()
+        let step = iterator.next()
+        while (!step.done) step = iterator.next()
+      },
+    }
+    apply(ctx, { serve: false, publicUrl: 'https://host.tail1234.ts.net/' })
+    assert.equal(channel, '/dsh-remote-access')
+    assert.equal(typeof handler, 'function')
+    const status = await handler('status', {})
+    assert.equal(status.ok, true)
+    assert.match(status.value.link, /token=tok/)
+    assert.match(status.value.qrSvg, /^<svg/)
+    assert.equal(status.value.serving, false)
+    assert.equal(status.value.trusted, true)
+    const unknown = await handler('nope', {})
+    assert.equal(unknown.ok, false)
+    assert.equal(unknown.error.code, 'not-found')
+  } finally {
+    if (previous === undefined) delete process.env.DSH_HOME
+    else process.env.DSH_HOME = previous
+  }
+})
