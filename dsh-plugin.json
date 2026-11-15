@@ -1,6 +1,6 @@
 {
   "id": "game25011.dsh.remote-access",
-  "name": "远程访问（Tailscale）",
+  "name": "远程操控（Tailscale）",
   "version": "0.2.0",
   "manifestVersion": "0.15",
   "facets": {
@@ -22,5 +22,5 @@
     ]
   },
   "subscriptions": [],
-  "notes": "把本机 Web UI 经 Tailscale Serve 暴露给 tailnet；/remote 与设置页显示带进程 token 的登录链接和二维码。链接含登录凭证，只在本人设备上使用。不访问外部网络，不调用模型。"
+  "notes": "通过 Tailscale 远程操控本机 DSH：把运行中的 DSH Web UI 经 Tailscale Serve 暴露给 tailnet；/remote 与设置页显示带进程 token 的登录链接和二维码。使用前提：DSH Web UI 在运行、Tailscale 链路打通（两端在线且主机名已加入 trustedHosts）、个人 PC 保持开机唤醒。由 DeepSeek 开发，人类用户负责实测与后续维护。不访问外部网络，不调用模型。"
 }

@@ -7,6 +7,7 @@
 - Add a QR code for the login link (vendored MIT `qrcode-generator`, no runtime dependency).
 - New Connection RPC channel `/dsh-remote-access` (`status`, `serve`).
 - `/remote` command kept; serve state now reflects the actual tailscale result.
+- Documented prerequisites (Web UI running, Tailscale link up, PC powered on) and authorship: built by DeepSeek, tested and maintained by the human user.
 
 ## 0.1.0 — 2026-11-15
 
