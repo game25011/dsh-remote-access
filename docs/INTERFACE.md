@@ -93,7 +93,7 @@ The Web Client bundle (`lib/client.js`) is a self-contained browser factory regi
 
 | endpoint | payload | value |
 |---|---|---|
-| `status` | `{}` | `{ version, link, publicUrl, qrSvg, servePort, serving, appPort, host, checks, ready }` |
+| `status` | `{}` | `{ version, link, publicUrl, qrSvg, servePort, serving, appPort, host, checks, verifyReason, ready }` |
 | `serve` | `{ enabled: boolean }` | same shape after applying the toggle; `{ ok:false, error }` on failure |
 
 The `link` and `qrSvg` fields contain the process login token. They are returned only through
@@ -101,7 +101,9 @@ the Connection RPC channel, which owns the browser Host/Origin/cookie fence; the
 writes them to storage or logs.
 
 `checks` is the preflight list (`webui`, `tailscaleRunning`, `online`, `magicDns`,
-`trustedHost`, `serveMapped`, `https`); `ready` is true only when the core checks pass.
+`trustedHost`, `serveMapped`, `verified`, `https`); `ready` is true only when the core checks and
+the end-to-end verification pass. The verification performs the real token exchange and loads
+the WebUI index through the tailnet name, so a ready link is known to work from another device.
 The channel is registered through `connection.rpc.handle` when available, otherwise through a
 `webServer` prefix route that reuses `connection.requestRejection` and the same unary envelope.
 

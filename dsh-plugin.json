@@ -1,7 +1,7 @@
 {
   "id": "game25011.dsh.remote-access",
   "name": "远程操控（Tailscale）",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "manifestVersion": "0.15",
   "facets": {
     "host": { "entry": "index.js", "apiVersion": "v1alpha1" },

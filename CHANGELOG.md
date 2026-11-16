@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 — 2026-11-16
+
+- Add an **end-to-end verification**: the host performs the real login through the tailnet
+  (token exchange → browser cookie → WebUI index with `__DSH_BOOT__`) before reporting ready.
+- The settings page shows the verification row and its failure reason; link and QR appear only
+  when every prerequisite and the end-to-end check pass.
+
 ## 0.3.0 — 2026-11-16
 
 - The settings page is now a preflight checklist: Web UI running, Tailscale running, node online,

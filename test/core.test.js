@@ -10,6 +10,7 @@ import {
   parseServeStatus,
   statusPayload,
   trustHint,
+  verifyRemote,
 } from '../index.js'
 
 test('effectiveConfig merges defaults and coerces values', () => {
@@ -57,6 +58,7 @@ test('statusPayload computes readiness from the preflight checks', () => {
     magicDns: true,
     trustedHost: true,
     serveMapped: true,
+    verified: true,
     https: true,
   }
   const payload = statusPayload({
@@ -73,7 +75,7 @@ test('statusPayload computes readiness from the preflight checks', () => {
   assert.equal(payload.link, 'https://h/?token=t')
   assert.equal(payload.ready, true)
   assert.equal(payload.checks.trustedHost, true)
-  const missing = statusPayload({ checks: { ...checks, serveMapped: false } })
+  const missing = statusPayload({ checks: { ...checks, verified: false } })
   assert.equal(missing.ready, false)
   const empty = statusPayload({})
   assert.equal(empty.ready, false)
@@ -87,4 +89,34 @@ test('parseServeStatus reads the tailnet mapping', () => {
   assert.deepEqual(parseServeStatus(text, 64277), { mapped: true, https: true, host: 'host.tail1234.ts.net' })
   assert.equal(parseServeStatus(text, 58987).mapped, false)
   assert.deepEqual(parseServeStatus('No serve config', 64277), { mapped: false, https: false, host: '' })
+})
+test('verifyRemote performs the real token exchange and WebUI load', async () => {
+  const calls = []
+  const fakeFetch = async (url, init) => {
+    calls.push({ url, init })
+    if (calls.length === 1) {
+      return {
+        status: 303,
+        headers: {
+          getSetCookie: () => ['dsh-auth=abc; Path=/; HttpOnly'],
+          get: () => 'dsh-auth=abc; Path=/; HttpOnly',
+        },
+      }
+    }
+    return { ok: true, status: 200, text: async () => '<script>window.__DSH_BOOT__={}</script>' }
+  }
+  const result = await verifyRemote({ publicUrl: 'https://h.tail.ts.net/', tokenUrl: 'https://h.tail.ts.net/?token=t' }, fakeFetch)
+  assert.equal(result.ok, true)
+  assert.equal(result.steps.tokenExchange, true)
+  assert.equal(result.steps.cookieIssued, true)
+  assert.equal(result.steps.webuiLoad, true)
+  assert.equal(calls[0].init.redirect, 'manual')
+  assert.equal(calls[1].init.headers.cookie, 'dsh-auth=abc')
+})
+
+test('verifyRemote reports a failed token exchange', async () => {
+  const fakeFetch = async () => ({ status: 401, headers: { getSetCookie: () => [], get: () => null } })
+  const result = await verifyRemote({ publicUrl: 'https://h.tail.ts.net/', tokenUrl: 'https://h.tail.ts.net/?token=bad' }, fakeFetch)
+  assert.equal(result.ok, false)
+  assert.match(result.reason, /401/)
 })

@@ -17,7 +17,7 @@ import { join } from 'node:path'
 import qrcode from './lib/vendor/qrcode.mjs'
 
 export const name = 'dsh-plugin-remote-access'
-export const VERSION = '0.3.0'
+export const VERSION = '0.4.0'
 export const inject = ['commands', 'webServer', 'connection']
 export const RPC_CHANNEL = '/dsh-remote-access'
 
@@ -158,6 +158,55 @@ function isTrustedHost(connection, host) {
   }
 }
 
+/**
+ * 端到端验证：从本机经 Tailscale 公网名做一次真实登录，确认 token 交换、
+ * cookie 颁发和 WebUI 加载都成功。带 cookie 的第二次请求证明手机/平板走同一条路也能用。
+ * @returns {Promise<{ok:boolean, reason:string, steps:object}>}
+ */
+export async function verifyRemote(options, fetchImpl) {
+  const doFetch = fetchImpl || (typeof globalThis.fetch === 'function' ? globalThis.fetch.bind(globalThis) : undefined)
+  const publicUrl = String(options?.publicUrl || '').replace(/\/+$/, '') + '/'
+  const tokenUrl = String(options?.tokenUrl || '')
+  const timeoutMs = Number.isFinite(Number(options?.timeoutMs)) && Number(options.timeoutMs) > 0 ? Number(options.timeoutMs) : 6000
+  const steps = { tokenExchange: false, cookieIssued: false, webuiLoad: false }
+  if (typeof doFetch !== 'function') return { ok: false, reason: '运行时不支持 fetch，无法做端到端验证。', steps }
+  if (!tokenUrl) return { ok: false, reason: '登录地址未生成。', steps }
+  const signal = AbortSignal.timeout(timeoutMs)
+  let first
+  try {
+    first = await doFetch(tokenUrl, { redirect: 'manual', signal })
+  } catch (error) {
+    return { ok: false, reason: '经 Tailscale 访问登录地址失败：' + String(error?.message ?? error), steps }
+  }
+  if (![302, 303, 307].includes(first.status)) {
+    return { ok: false, reason: '登录地址返回 HTTP ' + first.status + '（token 可能已失效或服务未就绪）。', steps }
+  }
+  steps.tokenExchange = true
+  let setCookie = []
+  try {
+    setCookie = typeof first.headers.getSetCookie === 'function' ? first.headers.getSetCookie() : [first.headers.get('set-cookie')].filter(Boolean)
+  } catch {
+    setCookie = []
+  }
+  const cookie = setCookie.length > 0 ? String(setCookie[0]).split(';', 1)[0] : ''
+  if (!cookie) return { ok: false, reason: '登录地址未颁发浏览器 cookie（认证流程异常）。', steps }
+  steps.cookieIssued = true
+  let second
+  try {
+    second = await doFetch(publicUrl, { headers: cookie ? { cookie } : {}, signal })
+  } catch (error) {
+    return { ok: false, reason: '用登录 cookie 加载 WebUI 失败：' + String(error?.message ?? error), steps }
+  }
+  if (!second.ok) return { ok: false, reason: '用登录 cookie 加载 WebUI 返回 HTTP ' + second.status + '。', steps }
+  let html = ''
+  try { html = await second.text() } catch {}
+  if (!html.includes('__DSH_BOOT__') && !html.includes('id="root"')) {
+    return { ok: false, reason: 'WebUI 页面内容异常（未找到启动载荷）。', steps }
+  }
+  steps.webuiLoad = true
+  return { ok: true, reason: '', steps }
+}
+
 /** 设置页 / RPC 共用的状态载荷；checks 是远程操控的前置条件清单。 */
 export function statusPayload(input) {
   const link = typeof input?.link === 'string' ? input.link : ''
@@ -170,10 +219,12 @@ export function statusPayload(input) {
     magicDns: checks.magicDns === true,
     trustedHost: checks.trustedHost === true,
     serveMapped: checks.serveMapped === true,
+    verified: checks.verified === true,
     https: checks.https === true,
   }
   const ready = normalizedChecks.webui && normalizedChecks.tailscaleRunning && normalizedChecks.online
     && normalizedChecks.magicDns && normalizedChecks.trustedHost && normalizedChecks.serveMapped
+    && normalizedChecks.verified
   return {
     version: VERSION,
     link,
@@ -184,6 +235,7 @@ export function statusPayload(input) {
     appPort: input?.appPort,
     host: typeof input?.host === 'string' ? input.host : '',
     checks: normalizedChecks,
+    verifyReason: typeof input?.verifyReason === 'string' ? input.verifyReason : '',
     ready,
   }
 }
@@ -377,8 +429,8 @@ export function apply(ctx, rawConfig) {
     if (serving) enable()
     yield () => disable()
 
-    /** 每次调用都重新采集条件，避免设置页显示过期状态。 */
-    const collect = () => {
+    /** 每次调用都重新采集条件并做端到端验证，避免设置页显示过期状态。 */
+    const collect = async () => {
       const tsStatus = readTailscaleStatus(tailscalePath, config.statusTimeoutMs)
       const dnsName = typeof tsStatus?.Self?.DNSName === 'string' && tsStatus.Self.DNSName.length > 0
         ? tsStatus.Self.DNSName.replace(/\.+$/, '')
@@ -390,7 +442,7 @@ export function apply(ctx, rawConfig) {
       const serveStatus = parseServeStatus(readServeStatusText(tailscalePath, config.statusTimeoutMs), appPort)
       const linkText = buildLoginLink(freshPublicUrl, connection.authenticatedUrl('http://127.0.0.1:' + appPort))
       const hint = trustHint(connection, freshPublicUrl)
-      const checks = {
+      const baseChecks = {
         webui: true,
         tailscaleRunning: backendRunning,
         online,
@@ -398,6 +450,15 @@ export function apply(ctx, rawConfig) {
         trustedHost: isTrustedHost(connection, host),
         serveMapped: serveStatus.mapped,
         https: serveStatus.https,
+      }
+      const coreReady = baseChecks.webui && baseChecks.tailscaleRunning && baseChecks.online
+        && baseChecks.magicDns && baseChecks.trustedHost && baseChecks.serveMapped
+      let verified = false
+      let verifyReason = '前置条件未满足，已跳过端到端验证。'
+      if (coreReady) {
+        const result = await verifyRemote({ publicUrl: freshPublicUrl, tokenUrl: linkText, timeoutMs: config.statusTimeoutMs })
+        verified = result.ok
+        verifyReason = result.ok ? '' : result.reason
       }
       return statusPayload({
         link: linkText,
@@ -407,19 +468,20 @@ export function apply(ctx, rawConfig) {
         serving,
         appPort,
         host,
-        checks,
+        checks: Object.assign({}, baseChecks, { verified }),
+        verifyReason,
         hint,
       })
     }
 
     const handleRpc = async (endpoint, payload) => {
-      if (endpoint === 'status') return { ok: true, value: collect() }
+      if (endpoint === 'status') return { ok: true, value: await collect() }
       if (endpoint === 'serve') {
         const enabled = payload?.enabled === true
         try {
           const ok = enabled ? await enable() : await disable()
           if (!ok) return rpcFailure('serve-failed', 'tailscale serve failed; see app log')
-          return { ok: true, value: collect() }
+          return { ok: true, value: await collect() }
         } catch (error) {
           return rpcFailure('serve-failed', String(error?.message ?? error))
         }
@@ -437,7 +499,7 @@ export function apply(ctx, rawConfig) {
       handler: async (invocation) => {
         const arg = String(invocation?.rawInput ?? '').trim().toLowerCase()
         if (arg === '' || arg === 'show' || arg === 'status') {
-          const current = collect()
+          const current = await collect()
           const lines = [
             '远程操控（Tailscale）',
             '',
