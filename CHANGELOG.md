@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2 — 2026-11-16
+
+- Fix the client bundle registration id: it must equal the package name
+  (`@game25011/dsh-remote-access`), otherwise the shell never instantiates the client module and
+  the settings page is missing.
+
 ## 0.2.1 — 2026-11-15
 
 - Add a dedicated settings icon (monitor + signal motif) and an explicit "远程操控分支" scope

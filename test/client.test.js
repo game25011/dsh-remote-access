@@ -22,7 +22,7 @@ await import('../lib/client.js')
 
 test('client bundle registers the settings section', () => {
   assert.ok(captured, 'module loader captured the bundle')
-  assert.equal(captured.id, 'dsh-remote-access')
+  assert.equal(captured.id, '@game25011/dsh-remote-access')
   const exportsObject = captured.factory((id) => {
     if (id === 'react') return fakeReact
     throw new Error('unexpected require: ' + id)
