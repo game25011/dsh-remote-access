@@ -17,7 +17,7 @@ import { join } from 'node:path'
 import qrcode from './lib/vendor/qrcode.mjs'
 
 export const name = 'dsh-plugin-remote-access'
-export const VERSION = '0.4.0'
+export const VERSION = '0.4.1'
 export const inject = ['commands', 'webServer', 'connection']
 export const RPC_CHANNEL = '/dsh-remote-access'
 

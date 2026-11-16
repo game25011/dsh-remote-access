@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 — 2026-11-16
+
+- Polish the settings-page copy: clearer first-time login steps, plain security wording for the
+  login credential, and actionable guidance when checks fail.
+
 ## 0.4.0 — 2026-11-16
 
 - Add an **end-to-end verification**: the host performs the real login through the tailnet
