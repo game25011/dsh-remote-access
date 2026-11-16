@@ -19,8 +19,8 @@
       "name": "@game25011/dsh-remote-access",
       "title": { "en": "dsh-remote-access", "zh": "远程操控（Tailscale）" },
       "description": {
-        "en": "Remote-control the local DSH through Tailscale: expose the running Web UI to your tailnet, with /remote and a settings page for the login link and QR. Requires the Web UI running, a working Tailscale link and the PC powered on. Built by DeepSeek; human users handle testing and maintenance.",
-        "zh": "通过 Tailscale 远程操控本机 DSH：把运行中的 Web UI 暴露给 tailnet，/remote 与设置页提供登录链接和二维码。前提：Web UI 在运行、Tailscale 链路打通、个人 PC 保持开机唤醒。由 DeepSeek 开发，人类用户负责实测与后续维护。"
+        "en": "Remote-control the local DSH from a phone or tablet through Tailscale: the running Web UI is exposed to your tailnet while it stays bound to 127.0.0.1. The settings page checks every prerequisite and verifies the real login end to end, then shows the login link and QR. Requires the Web UI running, a working Tailscale link and the PC powered on. Built by DeepSeek; human users handle testing and maintenance.",
+        "zh": "通过 Tailscale 从手机或平板远程操控本机 DSH：运行中的 Web UI 只对本人 tailnet 开放，网页服务仍绑 127.0.0.1。设置页先逐项自检并验证真实登录链路，通过后才给出登录链接和二维码；前提是 Web UI 在运行、Tailscale 链路打通、个人 PC 保持开机唤醒。由 DeepSeek 开发，人类用户负责实测与后续维护。"
       },
       "author": "game25011",
       "homepage": "https://github.com/game25011/dsh-remote-access",
@@ -33,12 +33,12 @@
       },
       "versions": [
         {
-          "version": "0.2.1",
-          "publishTimestamp": 1794756364,
+          "version": "0.4.2",
+          "publishTimestamp": 1794845218,
           "source": {
             "type": "git",
             "url": "https://github.com/game25011/dsh-remote-access",
-            "commit": "d849a0b"
+            "commit": "e50ec31"
           },
           "engines": { "dsh": ">=0.2.2-rc.0 <0.3.0" }
         }
