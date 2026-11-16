@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.2 — 2026-11-16
+
+- Use "手机或平板" in the first-time login copy instead of assuming a tablet.
+
 ## 0.4.1 — 2026-11-16
 
 - Polish the settings-page copy: clearer first-time login steps, plain security wording for the

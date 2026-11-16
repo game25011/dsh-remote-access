@@ -1,6 +1,6 @@
 {
   "name": "@game25011/dsh-remote-access",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Remote-control the local DSH through Tailscale: expose the running DSH Web UI to your tailnet. The settings page checks every prerequisite, then shows the login link and QR; /remote does the same from the command line.",
   "type": "module",
   "main": "index.js",
