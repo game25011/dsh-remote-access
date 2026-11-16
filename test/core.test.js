@@ -7,6 +7,7 @@ import {
   buildQrSvg,
   derivePublicUrl,
   effectiveConfig,
+  parseServeStatus,
   statusPayload,
   trustHint,
 } from '../index.js'
@@ -48,7 +49,16 @@ test('buildQrSvg renders an SVG for a login link', () => {
   assert.equal(buildQrSvg(''), '')
 })
 
-test('statusPayload shapes the RPC value defensively', () => {
+test('statusPayload computes readiness from the preflight checks', () => {
+  const checks = {
+    webui: true,
+    tailscaleRunning: true,
+    online: true,
+    magicDns: true,
+    trustedHost: true,
+    serveMapped: true,
+    https: true,
+  }
   const payload = statusPayload({
     link: 'https://h/?token=t',
     publicUrl: 'https://h/',
@@ -56,15 +66,25 @@ test('statusPayload shapes the RPC value defensively', () => {
     servePort: 443,
     serving: true,
     appPort: 1234,
-    trusted: true,
+    host: 'h',
+    checks,
   })
   assert.equal(payload.version, VERSION)
   assert.equal(payload.link, 'https://h/?token=t')
-  assert.equal(payload.serving, true)
-  assert.equal(payload.trusted, true)
+  assert.equal(payload.ready, true)
+  assert.equal(payload.checks.trustedHost, true)
+  const missing = statusPayload({ checks: { ...checks, serveMapped: false } })
+  assert.equal(missing.ready, false)
   const empty = statusPayload({})
+  assert.equal(empty.ready, false)
+  assert.equal(empty.checks.webui, false)
   assert.equal(empty.link, '')
   assert.equal(empty.qrSvg, '')
-  assert.equal(empty.serving, false)
-  assert.equal(empty.trusted, false)
+})
+
+test('parseServeStatus reads the tailnet mapping', () => {
+  const text = 'https://host.tail1234.ts.net (tailnet only)\n|-- / proxy http://127.0.0.1:64277'
+  assert.deepEqual(parseServeStatus(text, 64277), { mapped: true, https: true, host: 'host.tail1234.ts.net' })
+  assert.equal(parseServeStatus(text, 58987).mapped, false)
+  assert.deepEqual(parseServeStatus('No serve config', 64277), { mapped: false, https: false, host: '' })
 })

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — 2026-11-16
+
+- The settings page is now a preflight checklist: Web UI running, Tailscale running, node online,
+  MagicDNS name, trusted host, serve mapping, HTTPS. The login link and QR are shown only after
+  the core checks pass; "开启 tailnet 入口" and "重新检测" are available in place.
+- Fallback Connection-RPC transport via a `webServer` prefix route when
+  `connection.rpc.handle` is unavailable; fixes the HTTP 405 on the settings page.
+- `parseServeStatus` helper and enriched status payload (`checks`, `ready`).
+
 ## 0.2.2 — 2026-11-16
 
 - Fix the client bundle registration id: it must equal the package name
