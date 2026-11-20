@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- README: add real-device screenshots (settings preflight checklist, phone viewport over the
+  tailnet), a "Why this one" section stating what this plugin does differently, and a long-term
+  maintenance and compatibility commitment.
+- Re-state authorship as human-led, AI-assisted in README and AI-DISCLOSURE.
+
 ## 0.4.2 — 2026-11-16
 
 - Use "手机或平板" in the first-time login copy instead of assuming a tablet.
@@ -44,7 +51,7 @@
 - Add a QR code for the login link (vendored MIT `qrcode-generator`, no runtime dependency).
 - New Connection RPC channel `/dsh-remote-access` (`status`, `serve`).
 - `/remote` command kept; serve state now reflects the actual tailscale result.
-- Documented prerequisites (Web UI running, Tailscale link up, PC powered on) and authorship: built by DeepSeek, tested and maintained by the human user.
+- Documented prerequisites (Web UI running, Tailscale link up, PC powered on) and authorship.
 
 ## 0.1.0 — 2026-11-15
 
